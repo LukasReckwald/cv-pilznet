@@ -1,6 +1,6 @@
 # cv-pilznet
 
-
+![meme](meme.jpg)
 
 ## Getting started
 
