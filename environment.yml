@@ -1,0 +1,27 @@
+name: pilznet
+channels:
+  - pytorch
+  - defaults
+
+dependencies:
+  - python
+  - pip
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - scikit-learn
+  - scikit-image
+  - pillow
+  - tqdm
+  - jupyterlab
+  - ipykernel
+  - pytorch
+  - torchvision
+
+  - pip:
+      - opencv-contrib-python
+      - imageio
+      - albumentations
+      - kornia
+      - kaggle
