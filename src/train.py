@@ -12,11 +12,12 @@ Aufruf: python -m src.train --arch mobilenet_v2 --epochs 15 --freeze-epochs 3
 import argparse
 import json
 import time
+from collections import Counter
 from pathlib import Path
 
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Subset, WeightedRandomSampler
 
 from src.build_labels import PROCESSED_DIR, SPECIES_CLASSES
 from src.dataset import MushroomDataset
@@ -27,11 +28,29 @@ MODELS_DIR = Path("models")
 RESULTS_DIR = Path("results")
 
 
-def _make_loader(csv_path: Path, transform, batch_size: int, num_workers: int, shuffle: bool, limit: int | None) -> DataLoader:
+def _weighted_sampler(dataset) -> WeightedRandomSampler:
+    """Zieht seltene Arten häufiger, ohne dass Bilder physisch dupliziert
+    (und damit mehrfach von der Platte gelesen/dekodiert) werden müssen."""
+    if isinstance(dataset, Subset):
+        base, indices = dataset.dataset, dataset.indices
+    else:
+        base, indices = dataset, range(len(dataset))
+    species_idx = [int(base.rows[i]["species_idx"]) for i in indices]
+    counts = Counter(species_idx)
+    weights = [1.0 / counts[s] for s in species_idx]
+    return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
+
+
+def _make_loader(
+    csv_path: Path, transform, batch_size: int, num_workers: int, limit: int | None, weighted: bool
+) -> DataLoader:
     dataset = MushroomDataset(csv_path, transform=transform)
     if limit is not None:
         dataset = Subset(dataset, range(min(limit, len(dataset))))
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=True)
+    if weighted:
+        sampler = _weighted_sampler(dataset)
+        return DataLoader(dataset, batch_size=batch_size, sampler=sampler, num_workers=num_workers, pin_memory=True)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
 
 
 def _run_epoch(model, loader, device, criterion, optimizer, scaler, train: bool) -> tuple[float, float]:
@@ -87,10 +106,12 @@ def main() -> None:
     out_path = args.out or MODELS_DIR / f"{args.arch}.pt"
 
     train_loader = _make_loader(
-        args.data_dir / "train.csv", get_train_transforms(args.img_size), args.batch_size, args.num_workers, True, args.limit
+        args.data_dir / "train.csv", get_train_transforms(args.img_size), args.batch_size, args.num_workers, args.limit,
+        weighted=True,
     )
     val_loader = _make_loader(
-        args.data_dir / "val.csv", get_eval_transforms(args.img_size), args.batch_size, args.num_workers, False, args.limit
+        args.data_dir / "val.csv", get_eval_transforms(args.img_size), args.batch_size, args.num_workers, args.limit,
+        weighted=False,
     )
 
     num_classes = len(SPECIES_CLASSES)

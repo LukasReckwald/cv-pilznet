@@ -60,6 +60,8 @@ def _process_split(name: str, existing_files: dict[str, set[str]]) -> None:
     species_counter: Counter = Counter()
     binary_counter: Counter = Counter()
     missing = 0
+    duplicates = 0
+    seen_paths: set[str] = set()
     with out_csv.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["image_path", "species", "species_idx", "binary_label", "binary_idx"])
@@ -68,8 +70,12 @@ def _process_split(name: str, existing_files: dict[str, set[str]]) -> None:
             if filename not in existing_files.get(species_dir, ()):
                 missing += 1
                 continue
-            binary_label = get_label_for_class(species)
             image_path = (IMAGE_ROOT / species_dir / filename).as_posix()
+            if image_path in seen_paths:
+                duplicates += 1
+                continue
+            seen_paths.add(image_path)
+            binary_label = get_label_for_class(species)
             writer.writerow(
                 [image_path, species, SPECIES_TO_IDX[species], binary_label, BINARY_TO_IDX[binary_label]]
             )
@@ -78,6 +84,8 @@ def _process_split(name: str, existing_files: dict[str, set[str]]) -> None:
 
     if missing:
         print(f"  Warnung: {missing} Zeilen aus {src_csv.name} verweisen auf fehlende Bilddateien (übersprungen).")
+    if duplicates:
+        print(f"  {duplicates} doppelte Zeilen (gleiches Bild, Oversampling im Original) entfernt.")
     print(f"{name}: {sum(species_counter.values())} Zeilen -> {out_csv}")
     print(f"  binaer: {dict(binary_counter)}")
 

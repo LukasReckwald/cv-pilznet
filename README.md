@@ -69,7 +69,7 @@ Führt die Kaggle-Split-CSVs mit `src/class_mapping.py` (essbar/giftig je Art) z
 python -m src.build_labels
 ```
 
-Erzeugt `data/processed/{train,val,test}.csv` mit Spalten `image_path,species,species_idx,binary_label,binary_idx`. `train.csv` enthält bewusste Duplikate aus dem Original-Datensatz (Oversampling für Klassenbalance) — die val/test-Splits sind duplikat- und überschneidungsfrei.
+Erzeugt `data/processed/{train,val,test}.csv` mit Spalten `image_path,species,species_idx,binary_label,binary_idx`. Der Original-Datensatz enthält bewusste Duplikate zum Oversampling der Minderheitsklassen — die werden hier pro Split auf eindeutige Bilder reduziert (spart beim Training unnötiges wiederholtes Laden/Dekodieren derselben Datei). Die Klassenbalance beim Training übernimmt stattdessen ein `WeightedRandomSampler` in `src/train.py`. Die val/test-Splits waren schon vorher duplikat- und überschneidungsfrei.
 
 ### 2. Training (Google Colab)
 
