@@ -1,14 +1,18 @@
 # Datensatz zu groß, um ihn in Git zu speichern.
 data/raw/
 data/*.csv
+data/processed/
 !data/raw/.gitkeep
 
 # Trainierte Modelle
 models/*.pt
 !models/.gitkeep
 
-# Generierte Ergebnisse/Plots
+# Generierte Ergebnisse/Plots/Reports
 results/*.png
+results/*.json
+results/*.csv
+!results/.gitkeep
 
 # Python
 __pycache__/
