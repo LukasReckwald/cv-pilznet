@@ -5,7 +5,6 @@ data/processed/
 !data/raw/.gitkeep
 
 # Trainierte Modelle
-models/*.pt
 !models/.gitkeep
 
 # Generierte Ergebnisse/Plots/Reports
