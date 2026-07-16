@@ -3,7 +3,7 @@ Wertet einen trainierten Artenklassifikator aus: liefert sowohl die
 169-Klassen-Confusion-Matrix (Artenebene) als auch eine daraus abgeleitete
 essbar/giftig-Confusion-Matrix (binär, über class_mapping.CLASS_TO_LABEL).
 
-Aufruf: python -m src.evaluate --checkpoint models/mobilenet_v2.pt --split test
+Aufruf: python src/evaluate.py --checkpoint models/mobilenet_v2.pt --split test
 """
 
 import argparse
@@ -16,11 +16,11 @@ import torch
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score
 from torch.utils.data import DataLoader
 
-from src.build_labels import BINARY_TO_IDX, PROCESSED_DIR
-from src.class_mapping import BINARY_CLASSES, CLASS_TO_LABEL
-from src.dataset import MushroomDataset
-from src.model_factory import build_model
-from src.transforms import get_eval_transforms
+from build_labels import BINARY_TO_IDX, PROCESSED_DIR
+from class_mapping import BINARY_CLASSES, CLASS_TO_LABEL
+from dataset import MushroomDataset
+from model_factory import build_model
+from transforms import get_eval_transforms
 
 RESULTS_DIR = Path("results")
 

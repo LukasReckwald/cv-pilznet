@@ -3,10 +3,8 @@ Trainiert einen 169-Klassen-Artenklassifikator per Transfer Learning.
 
 Rezept: zuerst nur der neue Klassifikations-Head bei eingefrorenem Backbone
 (--freeze-epochs), danach vollständiges Fine-Tuning mit kleinerer Lernrate.
-Läuft auf CPU (langsam, für Smoke-Tests) und GPU (mit automatic mixed
-precision, wenn CUDA verfügbar ist).
 
-Aufruf: python -m src.train --arch mobilenet_v2 --epochs 15 --freeze-epochs 3
+Aufruf: python src/train.py --arch mobilenet_v2 --epochs 8 --freeze-epochs 3
 """
 
 import argparse
@@ -17,64 +15,44 @@ from pathlib import Path
 
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, Subset, WeightedRandomSampler
+from torch.utils.data import DataLoader
 
-from src.build_labels import PROCESSED_DIR, SPECIES_CLASSES
-from src.dataset import MushroomDataset
-from src.model_factory import build_model, set_backbone_trainable
-from src.transforms import get_eval_transforms, get_train_transforms
+from build_labels import PROCESSED_DIR, SPECIES_CLASSES
+from dataset import MushroomDataset
+from model_factory import build_model, set_backbone_trainable
+from transforms import get_eval_transforms, get_train_transforms
 
 MODELS_DIR = Path("models")
 RESULTS_DIR = Path("results")
 
 
-def _weighted_sampler(dataset) -> WeightedRandomSampler:
-    """Zieht seltene Arten häufiger, ohne dass Bilder physisch dupliziert
-    (und damit mehrfach von der Platte gelesen/dekodiert) werden müssen."""
-    if isinstance(dataset, Subset):
-        base, indices = dataset.dataset, dataset.indices
-    else:
-        base, indices = dataset, range(len(dataset))
-    species_idx = [int(base.rows[i]["species_idx"]) for i in indices]
-    counts = Counter(species_idx)
-    weights = [1.0 / counts[s] for s in species_idx]
-    return WeightedRandomSampler(weights, num_samples=len(weights), replacement=True)
+def _make_loader(csv_path, transform, batch_size, num_workers, shuffle, limit):
+    dataset = MushroomDataset(csv_path, transform=transform, limit=limit)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, pin_memory=True)
 
 
-def _make_loader(
-    csv_path: Path, transform, batch_size: int, num_workers: int, limit: int | None, weighted: bool
-) -> DataLoader:
-    dataset = MushroomDataset(csv_path, transform=transform)
-    if limit is not None:
-        dataset = Subset(dataset, range(min(limit, len(dataset))))
-    if weighted:
-        sampler = _weighted_sampler(dataset)
-        return DataLoader(dataset, batch_size=batch_size, sampler=sampler, num_workers=num_workers, pin_memory=True)
-    return DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True)
+def _class_weights(train_dataset, num_classes):
+    """Seltene Arten bekommen mehr Gewicht im Loss, damit das Modell sie
+    nicht einfach ignoriert (der Datensatz ist nicht gleich verteilt)."""
+    counts = Counter(int(row["species_idx"]) for row in train_dataset.rows)
+    weights = [1.0 / counts.get(i, 1) for i in range(num_classes)]
+    return torch.tensor(weights, dtype=torch.float32)
 
 
-def _run_epoch(model, loader, device, criterion, optimizer, scaler, train: bool) -> tuple[float, float]:
+def _run_epoch(model, loader, device, criterion, optimizer, train):
     model.train(mode=train)
     total_loss, correct, total = 0.0, 0, 0
     with torch.set_grad_enabled(train):
         for images, species_idx, _binary_idx in loader:
             images, species_idx = images.to(device), species_idx.to(device)
 
+            outputs = model(images)
+            loss = criterion(outputs, species_idx)
+
             if train:
                 optimizer.zero_grad()
-
-            with torch.autocast(device_type=device.type, enabled=(device.type == "cuda")):
-                outputs = model(images)
-                loss = criterion(outputs, species_idx)
-
-            if train:
-                if scaler is not None:
-                    scaler.scale(loss).backward()
-                    scaler.step(optimizer)
-                    scaler.update()
-                else:
-                    loss.backward()
-                    optimizer.step()
+                loss.backward()
+                optimizer.step()
 
             total_loss += loss.item() * images.size(0)
             correct += (outputs.argmax(dim=1) == species_idx).sum().item()
@@ -86,7 +64,7 @@ def _run_epoch(model, loader, device, criterion, optimizer, scaler, train: bool)
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--arch", choices=["mobilenet_v2", "resnet50"], required=True)
-    parser.add_argument("--epochs", type=int, default=15)
+    parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--freeze-epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -106,18 +84,16 @@ def main() -> None:
     out_path = args.out or MODELS_DIR / f"{args.arch}.pt"
 
     train_loader = _make_loader(
-        args.data_dir / "train.csv", get_train_transforms(args.img_size), args.batch_size, args.num_workers, args.limit,
-        weighted=True,
+        args.data_dir / "train.csv", get_train_transforms(args.img_size), args.batch_size, args.num_workers, True, args.limit
     )
     val_loader = _make_loader(
-        args.data_dir / "val.csv", get_eval_transforms(args.img_size), args.batch_size, args.num_workers, args.limit,
-        weighted=False,
+        args.data_dir / "val.csv", get_eval_transforms(args.img_size), args.batch_size, args.num_workers, False, args.limit
     )
 
     num_classes = len(SPECIES_CLASSES)
     model = build_model(args.arch, num_classes).to(device)
-    criterion = nn.CrossEntropyLoss()
-    scaler = torch.amp.GradScaler(device.type) if device.type == "cuda" else None
+    class_weights = _class_weights(train_loader.dataset, num_classes).to(device)
+    criterion = nn.CrossEntropyLoss(weight=class_weights)
 
     freezing = args.freeze_epochs > 0
     set_backbone_trainable(model, args.arch, trainable=not freezing)
@@ -135,8 +111,8 @@ def main() -> None:
             freezing = False
 
         start = time.time()
-        train_loss, train_acc = _run_epoch(model, train_loader, device, criterion, optimizer, scaler, train=True)
-        val_loss, val_acc = _run_epoch(model, val_loader, device, criterion, optimizer, scaler, train=False)
+        train_loss, train_acc = _run_epoch(model, train_loader, device, criterion, optimizer, train=True)
+        val_loss, val_acc = _run_epoch(model, val_loader, device, criterion, optimizer, train=False)
         elapsed = time.time() - start
 
         history["train_loss"].append(train_loss)

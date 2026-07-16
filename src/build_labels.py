@@ -4,15 +4,14 @@ image_path,label) mit der essbar/giftig-Zuordnung aus class_mapping.py
 zusammen und schreibt einheitliche, lokal nutzbare Label-Dateien nach
 data/processed/{train,val,test}.csv.
 
-Aufruf: python -m src.build_labels
+Aufruf: python src/build_labels.py
 """
 
-import argparse
 import csv
 from collections import Counter
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
-from src.class_mapping import (
+from class_mapping import (
     BINARY_CLASSES,
     CLASS_TO_LABEL,
     get_label_for_class,
@@ -28,23 +27,27 @@ SPECIES_TO_IDX = {name: i for i, name in enumerate(SPECIES_CLASSES)}
 BINARY_TO_IDX = {name: i for i, name in enumerate(BINARY_CLASSES)}
 
 
-def _resolve_image_path(raw_path: str) -> tuple[str, str]:
-    """Kaggle-Pfad (/kaggle/working/merged_dataset/<Art>/<Datei>) auf
-    (Art-Ordnername, Dateiname) reduzieren, unabhängig vom lokalen OS."""
-    posix_path = PurePosixPath(raw_path.replace("\\", "/"))
-    return posix_path.parts[-2], posix_path.parts[-1]
+def _resolve_image_path(raw_path):
+    """Kaggle-Pfad (z. B. /kaggle/working/merged_dataset/<Art>/<Datei>) auf
+    (Art-Ordnername, Dateiname) reduzieren - unabhängig davon, ob der Pfad
+    mit / oder \\ getrennt ist."""
+    parts = raw_path.replace("\\", "/").split("/")
+    return parts[-2], parts[-1]
 
 
-def _existing_files_index() -> dict[str, set[str]]:
-    """Einmaliger Verzeichnis-Scan statt eines stat()-Aufrufs pro CSV-Zeile."""
-    index: dict[str, set[str]] = {}
+def _existing_files_index():
+    """Liest einmal alle Dateinamen pro Art-Ordner ein und merkt sie sich in
+    einem Set. Ohne das müssten wir für jede einzelne Zeile der CSV (davon
+    gibt es hunderttausende) einzeln auf der Festplatte nachschauen, ob die
+    Bilddatei existiert - das wäre viel langsamer."""
+    index = {}
     for species_dir in IMAGE_ROOT.iterdir():
         if species_dir.is_dir():
             index[species_dir.name] = {p.name for p in species_dir.iterdir()}
     return index
 
 
-def _process_split(name: str, existing_files: dict[str, set[str]]) -> None:
+def _process_split(name, existing_files):
     src_csv = RAW_DIR / f"{name}.csv"
     if not src_csv.exists():
         raise FileNotFoundError(
@@ -57,11 +60,11 @@ def _process_split(name: str, existing_files: dict[str, set[str]]) -> None:
     validate_mapping(sorted({species for _, species in rows}))
 
     out_csv = PROCESSED_DIR / f"{name}.csv"
-    species_counter: Counter = Counter()
-    binary_counter: Counter = Counter()
+    species_counter = Counter()
+    binary_counter = Counter()
     missing = 0
     duplicates = 0
-    seen_paths: set[str] = set()
+    seen_paths = set()
     with out_csv.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["image_path", "species", "species_idx", "binary_label", "binary_idx"])
@@ -90,9 +93,7 @@ def _process_split(name: str, existing_files: dict[str, set[str]]) -> None:
     print(f"  binaer: {dict(binary_counter)}")
 
 
-def main() -> None:
-    argparse.ArgumentParser(description=__doc__).parse_args()
-
+def main():
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     print(f"Klassen im Mapping: {len(SPECIES_CLASSES)} {dict(Counter(CLASS_TO_LABEL.values()))}")
 

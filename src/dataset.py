@@ -14,11 +14,13 @@ class MushroomDataset(Dataset):
     Gibt (image_tensor, species_idx, binary_idx) zurück.
     """
 
-    def __init__(self, csv_path: str | Path, transform=None):
+    def __init__(self, csv_path, transform=None, limit=None):
         self.csv_path = Path(csv_path)
         self.transform = transform
         with self.csv_path.open(newline="", encoding="utf-8") as f:
             self.rows = list(csv.DictReader(f))
+        if limit is not None:
+            self.rows = self.rows[:limit]
         if not self.rows:
             raise ValueError(f"{self.csv_path} enthält keine Zeilen. Erst 'python -m src.build_labels' ausführen.")
 
