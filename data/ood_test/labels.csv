@@ -1,0 +1,21 @@
+filename,true_species,true_binary
+amanita_caesarea_1.jpg,Amanita caesarea,edible
+amanita_caesarea_2.jpg,Amanita caesarea,edible
+boletus_aereus_1.jpg,Boletus aereus,edible
+boletus_aereus_2.jpg,Boletus aereus,edible
+cantharellus_tubaeformis_1.jpg,Cantharellus tubaeformis,edible
+cantharellus_tubaeformis_2.jpg,Cantharellus tubaeformis,edible
+morchella_esculenta_1.jpg,Morchella esculenta,edible
+morchella_esculenta_2.jpg,Morchella esculenta,edible
+morchella_esculenta_3.jpg,Morchella esculenta,edible
+russula_emetica_1.jpg,Russula emetica,poisonous
+russula_emetica_2.jpg,Russula emetica,poisonous
+russula_emetica_3.jpg,Russula emetica,poisonous
+inocybe_geophylla_1.jpg,Inocybe geophylla,poisonous
+inocybe_geophylla_2.jpg,Inocybe geophylla,poisonous
+piptoporus_betulinus_1.jpg,Piptoporus betulinus,poisonous
+piptoporus_betulinus_2.jpg,Piptoporus betulinus,poisonous
+piptoporus_betulinus_3.jpg,Piptoporus betulinus,poisonous
+craterellus_cornucopioides_1.jpg,Craterellus cornucopioides,edible
+craterellus_cornucopioides_2.jpg,Craterellus cornucopioides,edible
+craterellus_cornucopioides_3.jpg,Craterellus cornucopioides,edible
