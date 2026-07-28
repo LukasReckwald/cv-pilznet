@@ -9,10 +9,7 @@ from torch.utils.data import Dataset
 
 
 class MushroomDataset(Dataset):
-    """Liest data/processed/{train,val,test}.csv (siehe build_labels.py).
-
-    Gibt (image_tensor, species_idx, binary_idx) zurück.
-    """
+    """Liest data/processed/{train,val,test}.csv, gibt (image, species_idx, binary_idx) zurück."""
 
     def __init__(self, csv_path, transform=None, limit=None):
         self.csv_path = Path(csv_path)

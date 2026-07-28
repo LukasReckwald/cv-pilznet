@@ -1,8 +1,6 @@
 """
-Trainiert einen 169-Klassen-Artenklassifikator per Transfer Learning.
-
-Rezept: zuerst nur der neue Klassifikations-Head bei eingefrorenem Backbone
-(--freeze-epochs), danach vollständiges Fine-Tuning mit kleinerer Lernrate.
+Trainiert einen 169-Klassen-Artenklassifikator per Transfer Learning
+(erst Head, dann volles Fine-Tuning).
 
 Aufruf: python src/train.py --arch mobilenet_v2 --epochs 8 --freeze-epochs 3
 """
@@ -32,8 +30,7 @@ def _make_loader(csv_path, transform, batch_size, num_workers, shuffle, limit):
 
 
 def _class_weights(train_dataset, num_classes):
-    """Seltene Arten bekommen mehr Gewicht im Loss, damit das Modell sie
-    nicht einfach ignoriert (der Datensatz ist nicht gleich verteilt)."""
+    """Gewichtet seltene Arten stärker im Loss."""
     counts = Counter(int(row["species_idx"]) for row in train_dataset.rows)
     weights = [1.0 / counts.get(i, 1) for i in range(num_classes)]
     return torch.tensor(weights, dtype=torch.float32)

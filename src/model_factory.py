@@ -27,12 +27,7 @@ def build_model(arch: str, num_classes: int) -> nn.Module:
 
 
 def set_backbone_trainable(model: nn.Module, arch: str, trainable: bool) -> None:
-    """Friert alle Parameter außer dem neuen Klassifikations-Head ein/entfriert sie.
-
-    Erst wird trainable auf ALLE Parameter gesetzt, danach wird der Head
-    wieder auf "trainierbar" zurückgesetzt - so bleibt er immer aktiv,
-    egal ob das Backbone gerade eingefroren ist oder nicht.
-    """
+    """Friert Backbone-Parameter ein/entfriert sie, der Head bleibt immer trainierbar."""
     head = model.classifier[-1] if arch == "mobilenet_v2" else model.fc
     for param in model.parameters():
         param.requires_grad = trainable

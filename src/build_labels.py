@@ -1,8 +1,6 @@
 """
-Führt die Kaggle-Split-CSVs (data/raw/{train,val,test}.csv, Spalten
-image_path,label) mit der essbar/giftig-Zuordnung aus class_mapping.py
-zusammen und schreibt einheitliche, lokal nutzbare Label-Dateien nach
-data/processed/{train,val,test}.csv.
+Führt die Kaggle-Split-CSVs mit der essbar/giftig-Zuordnung aus
+class_mapping.py zusammen -> data/processed/{train,val,test}.csv.
 
 Aufruf: python src/build_labels.py
 """
@@ -28,18 +26,13 @@ BINARY_TO_IDX = {name: i for i, name in enumerate(BINARY_CLASSES)}
 
 
 def _resolve_image_path(raw_path):
-    """Kaggle-Pfad (z. B. /kaggle/working/merged_dataset/<Art>/<Datei>) auf
-    (Art-Ordnername, Dateiname) reduzieren - unabhängig davon, ob der Pfad
-    mit / oder \\ getrennt ist."""
+    """Extrahiert (Art-Ordner, Dateiname) aus dem Kaggle-Pfad."""
     parts = raw_path.replace("\\", "/").split("/")
     return parts[-2], parts[-1]
 
 
 def _existing_files_index():
-    """Liest einmal alle Dateinamen pro Art-Ordner ein und merkt sie sich in
-    einem Set. Ohne das müssten wir für jede einzelne Zeile der CSV (davon
-    gibt es hunderttausende) einzeln auf der Festplatte nachschauen, ob die
-    Bilddatei existiert - das wäre viel langsamer."""
+    """Indiziert vorhandene Dateien je Art-Ordner (für schnelle Existenzchecks)."""
     index = {}
     for species_dir in IMAGE_ROOT.iterdir():
         if species_dir.is_dir():

@@ -1,22 +1,10 @@
 """
-Hier wird jede Pilzart-Klasse aus dem Kaggle-Datensatz (Ordnername)
-einer von zwei Kategorien zugeordnet: "edible" (essbar) oder "poisonous"
-(nicht essbar / giftig).
+Ordnet jede Pilzart-Klasse aus dem Datensatz "edible" (essbar) oder
+"poisonous" (giftig/ungenießbar) zu. "edible" nur bei eindeutigen
+Speisepilzen, alles andere (inkl. Flechten und Schleimpilz) gilt als
+"poisonous" - bewusst safety-first vereinfacht für die binäre Aufgabe.
 
-Einordnungsregel (safety-first, "essbar" ist die Ausnahme):
-- "edible" nur für Arten, die in Standard-Pilzführern eindeutig als
-  Speisepilz (gegart) gelten.
-- "poisonous" für alles andere: nachweislich giftige/psychoaktive Arten,
-  zäh-ungenießbare Arten (v. a. viele Porlinge/Krustenpilze), Arten mit
-  unklarer/umstrittener Genießbarkeit, sowie alle Nicht-Speisepilz-Organismen
-  im Datensatz (Flechten wie Cladonia/Evernia/Xanthoria, der Schleimpilz
-  Lycogala epidendrum). Für die binäre Klassifikationsaufgabe ist das
-  bewusst grob vereinfacht.
-
-WICHTIG: Diese Zuordnung dient ausschließlich dem ML-Klassifikationsprojekt
-und ist KEINE Sammelanleitung für die Praxis. Vor einer Verwendung in einem
-Bericht/einer Abgabe bitte stichprobenartig gegen eine mykologische Quelle
-prüfen (z. B. gbif.org, pilzepilze.de, oder ein aktuelles Pilzbuch).
+Nur für das ML-Projekt gedacht, keine Sammelanleitung für die Praxis.
 """
 
 from typing import Literal
@@ -198,11 +186,7 @@ BINARY_CLASSES = ["edible", "poisonous"]
 
 
 def get_label_for_class(class_name: str) -> str:
-    """
-    Gibt 'edible' oder 'poisonous' für eine gegebene Pilzart zurück.
-    Wirft einen Fehler, falls die Klasse noch nicht im Mapping ist -
-    das ist Absicht, damit nichts versehentlich falsch zugeordnet wird.
-    """
+    """Gibt 'edible'/'poisonous' zurück, wirft KeyError bei unbekannter Klasse."""
     if class_name not in CLASS_TO_LABEL:
         raise KeyError(
             f"Klasse '{class_name}' ist noch nicht in CLASS_TO_LABEL "
@@ -212,11 +196,7 @@ def get_label_for_class(class_name: str) -> str:
 
 
 def validate_mapping(found_classes: list[str]) -> None:
-    """
-    Prüft, ob für alle im Datensatz gefundenen Ordner/Klassen ein Mapping
-    existiert. Gibt eine verständliche Fehlermeldung mit den fehlenden
-    Klassen aus, statt nur irgendwo mitten im Training zu crashen.
-    """
+    """Prüft, ob für alle gefundenen Klassen ein Mapping existiert."""
     missing = [c for c in found_classes if c not in CLASS_TO_LABEL]
     if missing:
         raise ValueError(
