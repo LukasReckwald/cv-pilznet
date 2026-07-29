@@ -209,7 +209,7 @@ Wiederkehrende, modellübergreifende Problemgruppen: Porlinge/Baumpilze (*Fomito
 
 Der Domain-Shift-Test (bekannte Arten, andere Bildquelle) zeigt, dass beide Modelle auch außerhalb des Trainingsdatensatzes brauchbare Vorhersagen liefern; beim Out-of-Domain-Test (komplett unbekannte Arten) sinkt die Trefferquote erwartungsgemäß deutlich. Die Testsets hierfür sind bewusst klein (Größenordnung: einige Dutzend eigene Fotos) und dienen eher als qualitative Stichprobe denn als statistisch belastbare Auswertung. Rohdaten je Bild: `results/<arch>_domain_shift_predictions.csv`, `results/<arch>_ood_predictions.csv`.
 
-## Poster und Slides
+## Anhang
 
-- Projektexposé: [Pilzerkennung.pdf](Pilzerkennung.pdf)
-- Finales Poster/Slides: folgt
+- Projektexposé: [Projektexposé.pdf](Projektexposé.pdf)
+- Finales Poster: [Poster.pdf](Poster.pdf)
