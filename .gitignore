@@ -7,11 +7,6 @@ data/processed/
 # Trainierte Modelle
 !models/.gitkeep
 
-# Generierte Ergebnisse/Plots/Reports
-results/*.png
-results/*.json
-results/*.csv
-!results/.gitkeep
 
 # Python
 __pycache__/
