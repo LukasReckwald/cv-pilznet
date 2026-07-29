@@ -1,9 +1,8 @@
 """
-Wertet einen trainierten Artenklassifikator aus: liefert sowohl die
-169-Klassen-Confusion-Matrix (Artenebene) als auch eine daraus abgeleitete
-essbar/giftig-Confusion-Matrix (binär, über class_mapping.CLASS_TO_LABEL).
-
-Aufruf: python src/evaluate.py --checkpoint models/mobilenet_v2.pt --split test
+Wertet einen trainierten Artenklassifikator aus (z.B. python src/evaluate.py
+--checkpoint models/mobilenet_v2.pt --split test). Erzeugt die 169-Klassen-
+Confusion-Matrix und leitet daraus die essbar/giftig-Matrix ab (siehe
+class_mapping.CLASS_TO_LABEL).
 """
 
 import argparse
@@ -34,7 +33,7 @@ def _load_checkpoint(checkpoint_path: Path, device: torch.device):
 
 
 @torch.no_grad()
-def _predict(model, loader, device) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def _predict(model, loader, device):
     y_true_species, y_pred_species, y_true_binary = [], [], []
     for images, species_idx, binary_idx in loader:
         outputs = model(images.to(device))
@@ -48,7 +47,7 @@ def _predict(model, loader, device) -> tuple[np.ndarray, np.ndarray, np.ndarray]
     )
 
 
-def _plot_species_confusion(cm: np.ndarray, species_classes: list[str], out_path: Path) -> None:
+def _plot_species_confusion(cm: np.ndarray, species_classes: list[str], out_path: Path):
     with np.errstate(invalid="ignore", divide="ignore"):
         cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)
     cm_norm = np.nan_to_num(cm_norm)
@@ -68,7 +67,7 @@ def _plot_species_confusion(cm: np.ndarray, species_classes: list[str], out_path
     plt.close(fig)
 
 
-def _plot_binary_confusion(cm: np.ndarray, out_path: Path) -> None:
+def _plot_binary_confusion(cm: np.ndarray, out_path: Path):
     cm_pct = cm.astype(float) / cm.sum()
 
     fig, ax = plt.subplots(figsize=(5, 5))
@@ -93,7 +92,7 @@ def _plot_binary_confusion(cm: np.ndarray, out_path: Path) -> None:
     plt.close(fig)
 
 
-def main() -> None:
+def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--split", choices=["train", "val", "test"], default="test")

@@ -1,8 +1,7 @@
 """
-Trainiert einen 169-Klassen-Artenklassifikator per Transfer Learning
-(erst Head, dann volles Fine-Tuning).
-
-Aufruf: python src/train.py --arch mobilenet_v2 --epochs 8 --freeze-epochs 3
+Transfer-Learning-Training für den 169-Klassen-Artenklassifikator: erst nur
+der neue Head, danach volles Fine-Tuning mit reduzierter Lernrate.
+Beispiel: python src/train.py --arch mobilenet_v2 --epochs 8 --freeze-epochs 3
 """
 
 import argparse

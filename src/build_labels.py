@@ -1,9 +1,6 @@
-"""
-Führt die Kaggle-Split-CSVs mit der essbar/giftig-Zuordnung aus
-class_mapping.py zusammen -> data/processed/{train,val,test}.csv.
-
-Aufruf: python src/build_labels.py
-"""
+"""Führt die Kaggle-Split-CSVs mit der essbar/giftig-Zuordnung aus class_mapping.py
+zusammen -> data/processed/{train,val,test}.csv. Keine Argumente, einfach
+python src/build_labels.py."""
 
 import csv
 from collections import Counter
