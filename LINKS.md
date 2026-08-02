@@ -4,4 +4,4 @@
 
 **Bearbeiter:** Lukas Reckwald (in Zusammenarbeit mit einem Kommilitonen)
 
-- **GitLab-Repository:** https://gitlab.bht-berlin.de/s84985/cv-pilznet
+- **GitLab-Repository:** https://gitlab.bht-berlin.de/s84985/cv-pilznet/-/tree/abgabe (Tag `abgabe`)
