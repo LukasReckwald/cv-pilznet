@@ -192,8 +192,8 @@ Nach absoluter Anzahl sieht die Liste anders aus und wird von den großen Testkl
 
 | Richtung | ResNet50 | MobileNetV2 |
 |---|---|---|
-| Pfifferling → Falscher Pfifferling (harmlos) | 7,9 % (10/126) | 1,6 % (2/126) |
-| Falscher Pfifferling → Pfifferling (gefährlich) | 0,0 % (0/86) | 4,7 % (4/86) |
+| *Cantharellus cibarius* → *Hygrophoropsis aurantiaca* (Pfifferling → Falscher Pfifferling, harmlos) | 7,9 % (10/126) | 1,6 % (2/126) |
+| *Hygrophoropsis aurantiaca* → *Cantharellus cibarius* (Falscher Pfifferling → Pfifferling, gefährlich) | 0,0 % (0/86) | 4,7 % (4/86) |
 
 Die zweite Zeile ist die eigentlich wichtigere: ein echter Falscher Pfifferling wird als essbar eingestuft. Genau solche Fälle stehen unten in der Grenzüberschreitende-Verwechslungen-Tabelle.
 
