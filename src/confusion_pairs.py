@@ -81,7 +81,7 @@ def main():
                 }
             )
 
-    df = pd.DataFrame(rows).sort_values("count", ascending=False)
+    df = pd.DataFrame(rows).sort_values("pct_of_true_class", ascending=False)
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     out_path = RESULTS_DIR / f"{arch}_{args.split}_confused_pairs.csv"
     df.to_csv(out_path, index=False)
