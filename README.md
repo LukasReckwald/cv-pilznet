@@ -87,12 +87,34 @@ python src/evaluate.py --checkpoint models/mobilenet_v2.pt --split test
 
 Erzeugt pro Modell die Confusion Matrix auf Art- und Binär-Ebene (`results/<arch>_<split>_confusion_*.png` + `_report_*.csv`).
 
-**Weitere Auswertungsskripte:**
+## Skripte im Detail
 
-- `python src/confusion_pairs.py --checkpoint models/resnet50.pt --top 5` listet die Verwechslungspaare je Art auf, sortiert nach Anteil an der wahren Klasse.
-- `python src/predictions.py --checkpoint models/resnet50.pt --images-dir data/domain_shift_test --labels-csv data/domain_shift_test/labels.csv` testet das Modell auf eigenen Fotos außerhalb des Trainingsdatensatzes (Domain-Shift) bzw. auf komplett unbekannten Arten (Out-of-Domain).
-- `python src/plot_training_curves.py`, `python src/plot_results_table.py`, `python src/plot_domain_shift_table.py`, `python src/plot_ood_table.py` erzeugen die Diagramme/Tabellen im Abschnitt unten aus den jeweiligen Ergebnisdateien.
-- `python src/summarize_results.py` fasst die Kennzahlen aus der Ergebnistabelle, dem Trainingsverlauf, dem Domain-Shift- und dem OOD-Test in `results/summary_metrics.csv` zusammen, die Top-5-Verwechslungspaare je Modell (nach Anteil an der wahren Klasse) in `results/summary_top_confusions.csv` sowie alle grenzüberschreitenden Verwechslungen (essbar ↔ giftig) in `results/summary_boundary_confusions.csv`.
+Kurzreferenz für alles in `src/`: was das Skript macht und welche Funktionen drin stecken, gruppiert nach Pipeline-Phase.
+
+*Daten & Labels*
+
+- `class_mapping.py` – Zuordnung jeder der 169 Arten zu essbar/giftig, plus Validierung, dass keine Art fehlt.
+- `build_labels.py` – führt die Kaggle-Split-CSVs mit der Zuordnung zusammen.
+  - `_process_split()` – entfernt hier die doppelten Bildzeilen aus dem Original-Datensatz
+- `dataset.py` – PyTorch-`Dataset`, lädt Bild + Labels und wendet die Transforms an.
+- `transforms.py` – Augmentierung fürs Training, nur Resize+Normalisierung für Val/Test.
+  - `get_train_transforms()` – Flip, Rotation ±20°, Helligkeit/Kontrast/Farbe
+  - `get_eval_transforms()` – keine Augmentierung, Val/Test bleiben unverändert
+
+*Modell & Training*
+
+- `model_factory.py` – baut ResNet50/MobileNetV2 mit ImageNet-Gewichten.
+  - `set_backbone_trainable()` – Schalter fürs zweiphasige Training, friert den Backbone ein/entfriert ihn
+- `train.py` – Training in zwei Phasen, erst nur Head, dann alles fein-tunen.
+  - `_class_weights()` – Gewicht `1 / Anzahl_Bilder_dieser_Art` fürs `CrossEntropyLoss`, damit seltene Arten im Gradienten nicht untergehen
+
+*Auswertung*
+
+- `evaluate.py` – testet einen Checkpoint, erzeugt Confusion-Matrizen und Klassifikationsreports. Die essbar/giftig-Matrix wird direkt aus der Art-Vorhersage abgeleitet, kein separates Modell dafür.
+- `confusion_pairs.py` – listet alle Verwechslungspaare je Art als CSV, Grundlage für die Tabellen oben. Aufruf: `python src/confusion_pairs.py --checkpoint models/resnet50.pt --top 5`
+- `predictions.py` – testet einen Checkpoint auf eigenen Fotos außerhalb des Datensatzes (Domain-Shift/OOD). Aufruf: `python src/predictions.py --checkpoint models/resnet50.pt --images-dir data/domain_shift_test --labels-csv data/domain_shift_test/labels.csv`
+- `summarize_results.py` – fasst alle Kennzahlen in drei Zusammenfassungs-CSVs zusammen.
+  - `_boundary_confusions()` – filtert genau die Verwechslungen raus, bei denen essbar/giftig-Label auseinanderfällt, Grundlage für die Grenzüberschreitende-Verwechslungen-Tabelle
 
 ## Ergebnisse und Auswertung
 
@@ -166,7 +188,14 @@ MobileNetV2 war nach 8 Epochen noch nicht auskonvergiert (Val-Loss sank noch), m
 
 Bei beiden Modellen tauchen *Leccinum*-Arten untereinander, *Fomitopsis mounceae*/*pinicola* und *Phlebia tremellosa*/*Merulius tremellosus* ganz oben auf. Alles nah verwandte Arten, die sich auch für Menschen kaum unterscheiden lassen.
 
-Nach absoluter Anzahl sieht die Liste anders aus und wird von den großen Testklassen dominiert, etwa *Parmelia sulcata*/*Hypogymnia physodes* oder *Fomitopsis pinicola*/*Fomitopsis mounceae*. Fast alle häufigen Verwechslungen bleiben innerhalb derselben essbar/giftig-Gruppe. Prominenteste Ausnahme bei beiden Modellen: *Cantharellus cibarius* (essbar, Pfifferling) → *Hygrophoropsis aurantiaca* (giftig, Falscher Pfifferling) – der klassische Pfifferling-vs-Falscher-Pfifferling-Fehler, bei ResNet50 mit 7,9 % (10/126) deutlich häufiger als bei MobileNetV2 mit 1,6 % (2/126).
+Nach absoluter Anzahl sieht die Liste anders aus und wird von den großen Testklassen dominiert, etwa *Parmelia sulcata*/*Hypogymnia physodes* oder *Fomitopsis pinicola*/*Fomitopsis mounceae*. Fast alle häufigen Verwechslungen bleiben innerhalb derselben essbar/giftig-Gruppe, bekannteste Ausnahme ist der klassische Pfifferling-Fehler, in beide Richtungen:
+
+| Richtung | ResNet50 | MobileNetV2 |
+|---|---|---|
+| Pfifferling → Falscher Pfifferling (harmlos) | 7,9 % (10/126) | 1,6 % (2/126) |
+| Falscher Pfifferling → Pfifferling (gefährlich) | 0,0 % (0/86) | 4,7 % (4/86) |
+
+Die zweite Zeile ist die eigentlich wichtigere: ein echter Falscher Pfifferling wird als essbar eingestuft. Genau solche Fälle stehen unten in der Grenzüberschreitende-Verwechslungen-Tabelle.
 
 **Grenzüberschreitende Verwechslungen** (essbar ↔ giftig, die für die praktische Nutzung gefährlichste Fehlerklasse): vollständige Liste in `results/summary_boundary_confusions.csv` (1.152 Paare über beide Modelle, meist mit sehr kleinem Anteil), Top-5 je Modell nach Anteil an der wahren Klasse:
 
@@ -190,9 +219,9 @@ Nach absoluter Anzahl sieht die Liste anders aus und wird von den großen Testkl
 | *Agaricus augustus* | essbar → giftig | *Agaricus xanthodermus* | 7,8 % | 4 / 51 |
 | *Hypholoma lateritium* | essbar → giftig | *Hypholoma fasciculare* | 7,6 % | 7 / 92 |
 
-Auffällig: *Agaricus augustus*/*xanthodermus* (Riesenegerling vs. Gelbfärbender Egerling) und *Volvopluteus gloiocephalus* als Fehlvorhersage für mehrere giftige Arten tauchen bei beiden Modellen auf.
+*Agaricus augustus*/*xanthodermus* (Riesenegerling vs. Gelbfärbender Egerling) und *Volvopluteus gloiocephalus* als Fehlvorhersage für mehrere giftige Arten tauchen bei beiden Modellen auf, das fiel uns beim Durchschauen der Listen als erstes auf.
 
-Wiederkehrende, modellübergreifende Problemgruppen: Porlinge/Baumpilze (*Fomitopsis*-, *Fomes*-, *Ganoderma*-Arten), Flechten (*Parmelia*/*Hypogymnia*, *Evernia*-Arten, *Physcia*/*Phaeophyscia*), *Leccinum*-Arten untereinander, *Pleurotus ostreatus*/*pulmonarius* sowie *Boletus*/*Suillus*-Arten.
+Generell wiederholen sich bei beiden Modellen dieselben Problemgruppen: Porlinge/Baumpilze (*Fomitopsis*-, *Fomes*-, *Ganoderma*-Arten), Flechten (*Parmelia*/*Hypogymnia*, *Evernia*-Arten, *Physcia*/*Phaeophyscia*), *Leccinum*-Arten untereinander, *Pleurotus ostreatus*/*pulmonarius* sowie *Boletus*/*Suillus*-Arten. Macht auch Sinn, das sind botanisch die nächsten Verwandten.
 
 **Domain-Shift- und Out-of-Domain-Test** (eigene Fotos, nicht aus dem Trainingsdatensatz):
 
@@ -209,7 +238,20 @@ Wiederkehrende, modellübergreifende Problemgruppen: Porlinge/Baumpilze (*Fomito
 
 Der Domain-Shift-Test (bekannte Arten, andere Bildquelle) zeigt, dass beide Modelle auch außerhalb des Trainingsdatensatzes brauchbare Vorhersagen liefern; beim Out-of-Domain-Test (komplett unbekannte Arten) sinkt die Trefferquote erwartungsgemäß deutlich. Die Testsets hierfür sind bewusst klein (Größenordnung: einige Dutzend eigene Fotos) und dienen eher als qualitative Stichprobe denn als statistisch belastbare Auswertung. Rohdaten je Bild: `results/<arch>_domain_shift_predictions.csv`, `results/<arch>_ood_predictions.csv`.
 
+## Ausblick
+
+MobileNetV2 war nach den trainierten 8 Epochen laut Val-Loss noch nicht auskonvergiert (siehe oben), der Vergleich mit ResNet50 ist damit eigentlich nicht ganz fair. Mit mehr Zeit würden wir das nochmal mit deutlich mehr Epochen laufen lassen (20-30 statt 8) und dann neu vergleichen. Als kleineres Modell braucht MobileNetV2 vermutlich einfach länger, kann gut sein dass sich der Abstand zu ResNet50 dann noch verkleinert.
+
+Das eigentlich wichtigere Problem ist aber die essbar/giftig-Matrix, nicht die Accuracy: bei "tatsächlich giftig, vorhergesagt essbar" steht bei keinem der beiden Modelle eine 0. ResNet50 hält 281 von 10.698 giftigen Testbildern für essbar, MobileNetV2 374. Für die Abgabe hier ist das ein ordentliches Ergebnis, aber für den ursprünglich angedachten Zweck (jemand entscheidet anhand der App, ob er einen Pilz isst) würden wir das Modell so nicht rausgeben. Ein falsch-negativer Fall bedeutet im Zweifel eine echte Vergiftung, und egal wie gut die Gesamt-Accuracy klingt, so lange diese eine Zelle nicht bei (annähernd) 0 liegt, ist das kein Ersatz für einen Pilzexperten. Realistischer Ausblick wäre eher, das Modell nur als Zweitmeinung mit expliziter Unsicherheitsangabe einzusetzen statt als alleinige Entscheidungsgrundlage.
+
 ## Anhang
 
 - Projektexposé: [Projektexposé.pdf](Projektexposé.pdf)
 - Finales Poster: [Poster.pdf](Poster.pdf)
+
+**Plot-Skripte** (erzeugen nur die Grafiken oben aus schon vorhandenen CSV/JSON-Dateien, keine eigene Inferenz/Berechnung, deshalb hier nur kurz genannt statt mit voller Funktionsliste):
+
+- `plot_results_table.py` – rendert `results_table.png` aus den Test-Report-CSVs
+- `plot_domain_shift_table.py` – rendert `domain_shift_table.png` aus den Domain-Shift-Predictions
+- `plot_ood_table.py` – rendert `ood_table.png` aus den OOD-Predictions
+- `plot_training_curves.py` – rendert die vier Trainings-/Val-Kurven aus den History-JSONs
