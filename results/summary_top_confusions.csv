@@ -1,0 +1,11 @@
+model,rank,true_species,predicted_species,count,pct_of_true_class,true_class_support
+ResNet50,1,Leccinum versipelle,Leccinum aurantiacum,23,0.359375,64
+ResNet50,2,Fomitopsis mounceae,Fomitopsis pinicola,12,0.3,40
+ResNet50,3,Trametes gibbosa,Daedaleopsis confragosa,9,0.2432432432432432,37
+ResNet50,4,Phlebia tremellosa,Merulius tremellosus,9,0.2093023255813953,43
+ResNet50,5,Leccinum albostipitatum,Leccinum aurantiacum,13,0.1857142857142857,70
+MobileNetV2,1,Physcia adscendens,Phaeophyscia orbicularis,13,0.2363636363636363,55
+MobileNetV2,2,Pleurotus pulmonarius,Pleurotus ostreatus,19,0.1979166666666666,96
+MobileNetV2,3,Leccinum versipelle,Leccinum aurantiacum,12,0.1875,64
+MobileNetV2,4,Phlebia tremellosa,Merulius tremellosus,8,0.1860465116279069,43
+MobileNetV2,5,Fomitopsis mounceae,Fomitopsis pinicola,7,0.175,40
