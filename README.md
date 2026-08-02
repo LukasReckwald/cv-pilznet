@@ -4,6 +4,8 @@
 
 Automatische Pilzerkennung mittels Deep Learning: Klassifikation von Pilzfotos nach Art (169 Klassen) und daraus abgeleitet nach essbar/giftig.
 
+**Bearbeiter:** Lukas Reckwald (in Zusammenarbeit mit einem Kommilitonen)
+
 ## Projektidee
 
 Pilze sind in der Natur oft schwer zu unterscheiden. Essbare und giftige Arten sehen sich zum Verwechseln ähnlich. Ziel des Projekts ist ein Bildklassifikationsmodell, das Pilze anhand von Fotos automatisch erkennt und als essbar oder nicht essbar einordnet. Das hat praktischen Nutzen für Pilzsammler und könnte Grundlage für eine mobile Bestimmungs-App sein. Gleichzeitig ist die Aufgabe ein gutes Beispiel, um moderne Deep-Learning-Methoden aus der Bildverarbeitung (Transfer Learning, CNN-Architekturvergleich) in der Praxis anzuwenden.
