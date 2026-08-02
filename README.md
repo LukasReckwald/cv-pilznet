@@ -240,16 +240,16 @@ Der Domain-Shift-Test (bekannte Arten, andere Bildquelle) zeigt, dass beide Mode
 
 ## Ausblick
 
-MobileNetV2 war nach den trainierten 8 Epochen laut Val-Loss noch nicht auskonvergiert (siehe oben), der Vergleich mit ResNet50 ist damit eigentlich nicht ganz fair. Mit mehr Zeit würden wir das nochmal mit deutlich mehr Epochen laufen lassen (20-30 statt 8) und dann neu vergleichen. Als kleineres Modell braucht MobileNetV2 vermutlich einfach länger, kann gut sein dass sich der Abstand zu ResNet50 dann noch verkleinert.
+MobileNetV2 war nach den trainierten 8 Epochen laut Val-Loss noch nicht auskonvergiert, der Vergleich mit ResNet50 ist damit eigentlich nicht ganz fair. Mit mehr Zeit würden wir das nochmal mit deutlich mehr Epochen laufen lassen (20-30 statt 8) und dann neu vergleichen. Als kleineres Modell braucht MobileNetV2 vermutlich einfach länger, kann gut sein dass sich der Abstand zu ResNet50 dann noch verkleinert.
 
-Das eigentlich wichtigere Problem ist aber die essbar/giftig-Matrix, nicht die Accuracy: bei "tatsächlich giftig, vorhergesagt essbar" steht bei keinem der beiden Modelle eine 0. ResNet50 hält 281 von 10.698 giftigen Testbildern für essbar, MobileNetV2 374. Für die Abgabe hier ist das ein ordentliches Ergebnis, aber für den ursprünglich angedachten Zweck (jemand entscheidet anhand der App, ob er einen Pilz isst) würden wir das Modell so nicht rausgeben. Ein falsch-negativer Fall bedeutet im Zweifel eine echte Vergiftung, und egal wie gut die Gesamt-Accuracy klingt, so lange diese eine Zelle nicht bei (annähernd) 0 liegt, ist das kein Ersatz für einen Pilzexperten. Realistischer Ausblick wäre eher, das Modell nur als Zweitmeinung mit expliziter Unsicherheitsangabe einzusetzen statt als alleinige Entscheidungsgrundlage.
+Das eigentlich wichtigere Problem ist aber die essbar/giftig-Matrix, nicht die Accuracy: bei "tatsächlich giftig, vorhergesagt essbar" steht bei keinem der beiden Modelle eine 0. ResNet50 hält 281 von 10.698 giftigen Testbildern für essbar, MobileNetV2 374. Für die Abgabe hier ist das ein ordentliches Ergebnis, aber für den ursprünglich angedachten Zweck (jemand entscheidet anhand der App, ob er einen Pilz isst) würden wir das Modell so nicht rausgeben. Ein falsch-negativer Fall bedeutet im Zweifel eine echte Vergiftung, und egal wie gut die Gesamt-Accuracy klingt, so lange diese eine Zelle nicht bei 0 liegt, ist das kein Ersatz für einen Pilzexperten. Realistischer Ausblick wäre eher, das Modell nur als Zweitmeinung mit expliziter Unsicherheitsangabe einzusetzen statt als alleinige Entscheidungsgrundlage.
 
 ## Anhang
 
 - Projektexposé: [Projektexposé.pdf](Projektexposé.pdf)
 - Finales Poster: [Poster.pdf](Poster.pdf)
 
-**Plot-Skripte** (erzeugen nur die Grafiken oben aus schon vorhandenen CSV/JSON-Dateien, keine eigene Inferenz/Berechnung, deshalb hier nur kurz genannt statt mit voller Funktionsliste):
+**Plot-Skripte** (erzeugen nur die Grafiken oben aus schon vorhandenen CSV/JSON-Dateien):
 
 - `plot_results_table.py` – rendert `results_table.png` aus den Test-Report-CSVs
 - `plot_domain_shift_table.py` – rendert `domain_shift_table.png` aus den Domain-Shift-Predictions
